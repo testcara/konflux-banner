@@ -1,0 +1,66 @@
+name: 'Konflux Banner Content Security Validator'
+description: 'Validate banner YAML files content security in clusters folder'
+
+inputs:
+  folder:
+    description: 'Folder containing banner YAML files'
+    required: true
+    default: './clusters'
+
+runs:
+  using: "composite"
+  steps:
+  - name: Setup Node.js
+    uses: actions/setup-node@v3
+    with:
+      node-version: 16
+
+  - name: Install dependencies
+    run: npm install -g yaml sanitize-html
+    shell: bash
+
+  - name: Validate banner content security
+    shell: node
+    run: |
+      const fs = require('fs');
+      const path = require('path');
+      const yaml = require('yaml');
+      const sanitizeHtml = require('sanitize-html');
+
+      const folder = '${{ inputs.folder }}';
+      const files = fs.readdirSync(folder).filter(f => f.endsWith('.yml') || f.endsWith('.yaml'));
+
+      let hasError = false;
+
+      for (const file of files) {
+        const filepath = path.join(folder, file);
+        console.log(`Validating content security for ${filepath}`);
+
+        const content = fs.readFileSync(filepath, 'utf8');
+        let banner;
+        try {
+          banner = yaml.parse(content);
+        } catch (err) {
+          console.error(`YAML parsing error in ${file}:`, err.message);
+          hasError = true;
+          continue;
+        }
+
+        if (banner.Details) {
+          const clean = sanitizeHtml(banner.Details, {
+            allowedTags: ['b', 'i', 'em', 'strong', 'a', 'p', 'ul', 'li', 'br'],
+            allowedAttributes: { a: ['href', 'title', 'target'] },
+            allowedSchemes: ['http', 'https', 'mailto'],
+          });
+          if (clean !== banner.Details) {
+            console.error(`Details field contains unsafe HTML content in ${file}`);
+            hasError = true;
+          }
+        }
+        if (banner.summary && /<.*?>/.test(banner.summary)) {
+          console.error(`Summary field should not contain HTML tags in ${file}`);
+          hasError = true;
+        }
+      }
+
+      if (hasError) process.exit(1);

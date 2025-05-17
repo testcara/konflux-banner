@@ -74,6 +74,50 @@ clusters
 3. **Updating Banners Without Infra-Deployments**  
    Banner contents are just maintained here. Once the bannerPath is configured (via a one-time infra-deployments PR), further updates to the banner content only require merging a PR in this repo. Since the UI polls or fetches the banner dynamically from the remote path, no additional deployment or ArgoCD sync is needed to update the message.
 
+## 🔎 YAML Validation Workflows
+
+This repository uses GitHub Actions to automatically validate all banner YAML files under the `clusters/` folder.
+
+### Validations
+
+1. **File Naming Requirement**
+
+    Files must use the .yaml extension (not .yml) to avoid confusion, reduces errors, and aligns with industry standards.
+
+2. **Format Validation (`konflux-banner-validator`)**
+   - Ensures YAML files strictly follow the [defined schema](./.github/schema/banner-schema.json).
+   - Checks for required fields, field types, and structure correctness.
+   - If any schema mismatch is detected, the PR will fail.
+
+3. **Content Security Validation (`konflux-banner-security`)**
+   - Verifies that content in fields like `Details` and `summary` is safe.
+   - Ensures:
+     - `summary` must not contain HTML tags.
+     - `Details` only allows a limited set of safe HTML (`b`, `i`, `a`, etc.).
+   - Prevents unsafe links, scripts, or malicious content from being merged.
+
+### Trigger Conditions
+
+Both validations are automatically triggered on:  
+
+- **Push** or **Pull Request** that modifies:
+  - `clusters/**/*.yml`
+  - `clusters/**/*.yaml`
+
+### Workflow File
+
+The workflow is defined in:
+
+```yaml
+.github/workflows/validate-banner.yml
+```
+
+### 🔐 Workflow Permissions
+
+This repository's GitHub Actions workflows run with read-only permissions.
+They do not perform any write operations such as pushing code, deploying, or publishing.
+This ensures a safe CI process when accepting pull requests from external contributors.
+
 ## ✍️ Contributing
 
 1. **Fork this repository**  

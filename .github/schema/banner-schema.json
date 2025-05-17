@@ -1,0 +1,24 @@
+{
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "type": "object",
+   "properties": {
+     "enabled": { "type": "boolean" },
+     "title": { "type": "string" },
+     "message": { "type": "string" },
+     "type": {
+       "type": "string",
+       "enum": ["info", "warning", "danger"]
+     },
+     "start": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+     },
+     "end": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+     },
+     "details": { "type": "string" }
+   },
+   "required": ["enabled", "title", "message", "type"],
+   "additionalProperties": false
+ } 
