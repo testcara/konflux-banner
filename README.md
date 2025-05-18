@@ -91,9 +91,20 @@ Validation includes:
 
 ### CI Validation (GitHub Actions)
 
-On every push or pull request involving `clusters/**/*.yaml`, GitHub Actions will automatically run all validation checks.
+On every push or pull request involving `clusters/**/*.yaml`, GitHub Actions will automatically run all
+validation checks with read-only permissions. The workflow file is locationed at `.github/workflows/validate-banner.yaml`.
 
-Workflow location: `.github/workflows/validate-banner.yaml`
+To help demonstrate the logic, here are example pull requests that illustrate both valid and invalid cases:
+
+✅ Valid Examples:
+
+- ✅ [PR #4](https://github.com/testcara/konflux-banner/pull/4) – Valid Example 1: vaild banner content with all filed
+- ✅ [PR #5](https://github.com/testcara/konflux-banner/pull/5) – Valid Example 2: vaild banner content with all filed without time or details.
+
+❌ Invalid Examples:
+
+- ❌ [PR #2](https://github.com/testcara/konflux-banner/pull/2) – Invalid Example 1: invalid banner content with invalid schema
+- ❌ [PR #3](https://github.com/testcara/konflux-banner/pull/3) – Invalid Example 2: invalid banner content with html codes
 
 ### Local Validation (Recommended Before Push)
 
@@ -118,27 +129,13 @@ sudo dnf module enable nodejs:18 -y
 sudo dnf install -y nodejs make
 ```
 
-#### Run the same validations locally
+#### Run Validations Locally
 
 Run ```make check-prereq``` to verify your environment has all required tools mentioned before and then validate.
 
 ```bash
 make all
 ```
-
-### Trigger Conditions
-
-Validation is automatically triggered on any push or pull request that modifies files matching: ```clusters/**/*.yaml```.
-
-### Workflow File
-
-The workflow is defined in ```.github/workflows/validate-banner.yaml```.
-
-###  Workflow Permissions
-
-This repository's GitHub Actions workflows run with read-only permissions.
-They do not perform any write operations such as pushing code, deploying, or publishing.
-This ensures a safe CI process when accepting pull requests from external contributors.
 
 ## ✍️ Contributing
 
@@ -173,7 +170,7 @@ This ensures a safe CI process when accepting pull requests from external contri
     Push your changes to your forked repository:
 
     ```bash
-    git push origin add-new-banner
+    git push origin update-banner
     ```
 
 7. **Create a Pull Request**  
