@@ -16,9 +16,9 @@ Each banner must be stored in **its own YAML file**, and adhere to the format be
 enabled: true
 title: Scheduled Maintenance Notification
 message: The Konflux platform will undergo scheduled maintenance tonight. Temporary service interruptions may occur.
-type: warning  # options: info, warning, error, success
-start: "2025-05-15T21:00:00Z"
-end: "2025-05-15T23:00:00Z"
+type: warning  # options: info, warning, danger
+startTime: "2025-05-15T21:00:00Z"
+endTime: "2025-05-15T23:00:00Z"
 details: |
   Details:
   - Maintenance window: May 15, 2025 from 21:00 to 23:00 UTC
@@ -33,11 +33,12 @@ details: |
 | Field         | Type   | Required | Description                                                                 |
 |---------------|--------|----------|-----------------------------------------------------------------------------|
 | `enabled`     | boolean| ✅       | To enable the banner or not                                               |
-| `summary`     | string | ✅       | Text shown to users in the banner                                           |
-| `type`        | string | ✅       | Visual severity: `info`, `warning`, or `danger`                             |
-| `start`       | string |  ❌      | When the banner becomes active (UTC, ISO 8601 format)                       |
-| `end`         | string |  ❌      | When the banner disappears automatically (UTC, ISO 8601 format)            |
-| `Details`     | string | ❌       | More details like: issues, slack channels, etc.                     |
+| `title`       | string | ✅       | A brief header summarizing the banner's purpose                           |
+| `message`     | string | ✅       | Text shown to users in the banner                                         |
+| `type`        | string | ✅       | Visual severity: `info`, `warning`, or `danger`                           |
+| `startTime`   | string | ❌      | When the banner becomes active (UTC, ISO 8601 format)                      |
+| `endTime`     | string | ❌      | When the banner disappears automatically (UTC, ISO 8601 format)            |
+| `Details`     | string | ❌       | More details like: issues, slack channels, etc.                           |
 
 Optional fields (e.g., start, end) should only be included if needed, and must follow the required format. If not needed, omit them entirely to avoid schema validation errors.
 
