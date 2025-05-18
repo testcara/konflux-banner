@@ -1,5 +1,5 @@
 # Directory containing YAMLs and schema
-YAML_DIR := ./clusters
+YAML_DIR := $(abspath ./clusters)
 SCHEMA := .github/schema/banner-schema.json
 
 # Validator entry point

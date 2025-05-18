@@ -9,13 +9,13 @@
        "type": "string",
        "enum": ["info", "warning", "danger"]
      },
-     "start": {
+     "startTime": {
        "type": "string",
-       "pattern": "date-format"
+       "format": "date-time"
      },
-     "end": {
+     "endTime": {
        "type": "string",
-       "pattern": "date-format"
+       "format": "date-time"
      },
      "details": { "type": "string" }
    },
