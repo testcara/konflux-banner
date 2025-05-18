@@ -17,24 +17,5 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Enforce .yaml file extension
-      run: |
-        invalid_files=$(find ./clusters -type f -name "*.yml")
-        if [ -n "$invalid_files" ]; then
-          echo "❌ Found files using .yml extension:"
-          echo "$invalid_files"
-          echo "Please rename them to .yaml"
-          exit 1
-        else
-          echo "✅ No .yml files found."
-        fi
-
-    - name: Validate banner YAML files
-      uses: ./.github/actions/konflux-banner-validator
-      with:
-        folder: './clusters'
-
-    - name: Validate Content Security
-      uses: ./.github/actions/konflux-banner-security
-      with:
-        folder: './clusters'
+    - name: Run banner validation via Makefile
+      run: make check-prereqs && make all

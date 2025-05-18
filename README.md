@@ -39,6 +39,8 @@ details: |
 | `end`         | string |  ❌      | When the banner disappears automatically (UTC, ISO 8601 format)            |
 | `Details`     | string | ❌       | More details like: issues, slack channels, etc.                     |
 
+Optional fields (e.g., start, end) should only be included if needed, and must follow the required format. If not needed, omit them entirely to avoid schema validation errors.
+
 ## 🗂 Directory Structure
 
 ```yaml
@@ -54,63 +56,82 @@ clusters
     └── stone-stg-rh01.yaml
 ```
 
-- **`production/` and `staging/`**  
-  Each subfolder corresponds to different environments. The files inside will be consumed by respective konflux clusters.
+- production/ and staging/: Represent different environments.
 
-- **YAML Files**  
-  Each YAML file represents **one** banner. For example, `kflux-ocp-p01.yaml` describes a specific banner for the `Private - ocp-p01` environment mentioned in the the [UI versions](https://konflux.pages.redhat.com/docs/users/getting-started/ui-versions.html) page.  
+- Each YAML file maps to a specific Konflux cluster, as referenced the [UI versions](https://konflux.pages.redhat.com/docs/users/getting-started/ui-versions.html) page.
 
 ## ✅ How It Works
 
-1. **Cluster-Specific Banner Configuration Paths**  
+1. **Cluster-Specific Banner Configuration Paths**
+
    For each cluster, a ConfigMap named konflux-banner-config is generated via Kustomize.
    This ConfigMap only contains a single bannerPath key, which points to the actual banner content file (e.g., `https://raw.githubusercontent.com/testcara/konflux-banner/main/clusters/production/stone-prod-p01.yaml`).
    The path is defined in configMapGenerator using a per-cluster environment file, and each cluster has its own configuration.
 
-2. **Displaying Banners**  
+2. **Displaying Banners**
+
    The frontend polls the generated ConfigMap, read the content from the bannerPath then displays the relevant banner to users based on the configured `start` and `end` times.
    If the `start` and `end` times are not set, the banner would be shown immediately and never disapper.
 
-3. **Updating Banners Without Infra-Deployments**  
-   Banner contents are just maintained here. Once the bannerPath is configured (via a one-time infra-deployments PR), further updates to the banner content only require merging a PR in this repo. Since the UI polls or fetches the banner dynamically from the remote path, no additional deployment or ArgoCD sync is needed to update the message.
+3. **No Infra Deployment Required**
 
-## 🔎 YAML Validation Workflows
+   Once bannerPath is set via a one-time infra PR, banner updates **require no deployment**.
+   Simply modify the banner YAML here and merge the PR — the frontend will pick it up automatically.
 
-This repository uses GitHub Actions to automatically validate all banner YAML files under the `clusters/` folder.
+## 🔎 YAML Validation
 
-### Validations
+All banner YAML files under `clusters/` are validated to ensure correctness and safety.
 
-1. **File Naming Requirement**
+Validation includes:
 
-    Files must use the .yaml extension (not .yml) to avoid confusion, reduces errors, and aligns with industry standards.
+- ✅ File extension check — Only `.yaml` is allowed (no `.yml`)
+- ✅ Schema validation — Validates required fields and types against a JSON schema
+- ✅ Content safety — Ensures `summary` and `details` do not include unsafe content
 
-2. **Format Validation (`konflux-banner-validator`)**
-   - Ensures YAML files strictly follow the [defined schema](./.github/schema/banner-schema.json).
-   - Checks for required fields, field types, and structure correctness.
-   - If any schema mismatch is detected, the PR will fail.
+### CI Validation (GitHub Actions)
 
-3. **Content Security Validation (`konflux-banner-security`)**
-   - Verifies that content in fields like `Details` and `summary` is safe.
-   - Ensures:
-     - `summary` must not contain HTML tags.
-     - `Details` only allows a limited set of safe HTML (`b`, `i`, `a`, etc.).
-   - Prevents unsafe links, scripts, or malicious content from being merged.
+On every push or pull request involving `clusters/**/*.yaml`, GitHub Actions will automatically run all validation checks.
+
+Workflow location: `.github/workflows/validate-banner.yaml`
+
+### Local Validation (Recommended Before Push)
+
+#### Prerequisites
+
+To run the validation locally, ensure the following tools are installed:
+
+- `make` – available via most package managers (`brew`, `apt`, etc.)
+- `npm` – required to install validator dependencies (`node` is also needed)
+
+Example install commands:
+
+```bash
+# macOS
+brew install make node
+
+# Ubuntu/Debian
+sudo apt-get install build-essential nodejs npm
+
+# Fedora/Centos/RHEL
+sudo dnf module enable nodejs:18 -y
+sudo dnf install -y nodejs make
+```
+
+#### Run the same validations locally
+
+Run ```make check-prereq``` to verify your environment has all required tools mentioned before and then validate.
+
+```bash
+make all
+```
 
 ### Trigger Conditions
 
-Both validations are automatically triggered on:  
-
-- **Push** or **Pull Request** that modifies:
-  - `clusters/**/*.yml`
-  - `clusters/**/*.yaml`
+Validation is automatically triggered on any push or pull request that modifies files matching: ```clusters/**/*.yaml```.
 
 ### Workflow File
 
-The workflow is defined in:
-
-```yaml
-.github/workflows/validate-banner.yml
-```
+The workflow is defined in ```.github/workflows/validate-banner.yaml```.
 
 ### 🔐 Workflow Permissions
 
@@ -134,8 +155,11 @@ This ensures a safe CI process when accepting pull requests from external contri
     Edit one exsiting YAML file under the appropriate directory (e.g., `clusters/staging` or `clusters/production`).
     As for adding new banner to new clusters, beside creating one YAML file here, one Pull Request for [konflux-banner](https://github.com/testcara/infra-deployments/tree/konflux-banner/components/konflux-banner) component in infra-deployment repo is also needed.
 
-4. **Follow the format strictly**  
-    Ensure your YAML file adheres to the predefined format. Only one banner per YAML file will be accepted. Invalid files will be ignored.
+4. **(Optional) Validate Locally**  
+
+    ```bash
+    make all
+    ```
 
 5. **Commit your changes**  
     Commit your changes with a descriptive commit message. For example:
