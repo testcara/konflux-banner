@@ -91,9 +91,19 @@ Validation includes:
 
 ### CI Validation (GitHub Actions)
 
-On every push or pull request involving `clusters/**/*.yaml`, GitHub Actions will automatically run all validation checks.
+On every push or pull request involving `clusters/**/*.yaml`, GitHub Actions will automatically run all validation checks. The Workflow is locationed at `.github/workflows/validate-banner.yaml`
 
-Workflow location: `.github/workflows/validate-banner.yaml`
+To help demonstrate the logic, here are example pull requests that illustrate both valid and invalid cases:
+
+✅ Valid Examples:
+
+- ✅ [PR #4]([https://github.com/testcara/konflux-banner/pull/4) – Valid Example 1: vaild banner content with all filed
+- ✅ [PR #5]([https://github.com/testcara/konflux-banner/pull/5) – Valid Example 2: vaild banner content with all filed without time or details.
+
+❌ Invalid Examples:
+
+- ❌ [PR #2](https://github.com/testcara/konflux-banner/pull/2) – Invalid Example 1: invalid banner content with invalid schema
+- ❌ [PR #3](https://github.com/testcara/konflux-banner/pull/3) – Invalid Example 2: invalid banner content with html codes
 
 ### Local Validation (Recommended Before Push)
 
