@@ -85,9 +85,9 @@ All banner YAML files under `clusters/` are validated to ensure correctness and 
 
 Validation includes:
 
-- ✅ File extension check — Only `.yaml` is allowed (no `.yml`)
-- ✅ Schema validation — Validates required fields and types against a JSON schema
-- ✅ Content safety — Ensures `summary` and `details` do not include unsafe content
+- File extension check — Only `.yaml` is allowed (no `.yml`)
+- Schema validation — Validates required fields and types against a JSON schema
+- Content safety — Ensures `summary` and `details` do not include unsafe content
 
 ### CI Validation (GitHub Actions)
 
@@ -134,7 +134,7 @@ Validation is automatically triggered on any push or pull request that modifies 
 
 The workflow is defined in ```.github/workflows/validate-banner.yaml```.
 
-### 🔐 Workflow Permissions
+###  Workflow Permissions
 
 This repository's GitHub Actions workflows run with read-only permissions.
 They do not perform any write operations such as pushing code, deploying, or publishing.
