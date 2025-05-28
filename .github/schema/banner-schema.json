@@ -2,7 +2,7 @@
    "$schema": "http://json-schema.org/draft-07/schema#",
    "type": "object",
    "properties": {
-     "enabled": { "type": "boolean" },
+     "enable": { "type": "boolean" },
      "title": { "type": "string" },
      "message": { "type": "string" },
      "type": {
@@ -19,6 +19,6 @@
      },
      "details": { "type": "string" }
    },
-   "required": ["enabled", "title", "message", "type"],
+   "required": ["enable", "title", "message", "type"],
    "additionalProperties": false
  } 

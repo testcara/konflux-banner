@@ -40,7 +40,7 @@ details: |
 | `endTime`   | string  | ❌       | When the banner disappears automatically (UTC, ISO 8601 format) |
 | `details`   | string  | ❌       | More details like: issues, Slack channels, etc.                 |
 
-More details about certain fields:
+More details about certain fields:  
 
 - Optional fields like `startTime`, `endTime`, and `details` should be included only when needed. If unused, omit them completely to avoid schema validation errors. 
 - Time values must follow the ISO 8601 UTC format.
@@ -130,23 +130,22 @@ To help demonstrate the logic, here are example pull requests that illustrate bo
 
 #### Prerequisites
 
-To run the validation locally, ensure the following tools are installed:
+To run the YAML schema validator locally, ensure you have the following tool installed:
 
-- `make` – available via most package managers (`brew`, `apt`, etc.)
-- `npm` – required to install validator dependencies (`node` is also needed)
+- `Go` – the Go programming language (version 1.20 or higher recommended)
 
 Example install commands:
 
 ```bash
-# macOS
-brew install make node
+# macOS (via Homebrew)
+brew install go
 
 # Ubuntu/Debian
-sudo apt-get install build-essential nodejs npm
+sudo apt-get update
+sudo apt-get install golang
 
 # Fedora/Centos/RHEL
-sudo dnf module enable nodejs:18 -y
-sudo dnf install -y nodejs make
+sudo dnf install golang
 ```
 
 #### Run Validations Locally
