@@ -1,11 +1,6 @@
-# Directory containing YAMLs and schema
 YAML_DIR := $(abspath ./clusters)
-SCHEMA := .github/schema/banner-schema.json
+SCHEMA := $(abspath .github/schema/banner-schema.json)
 
-# Validator entry point
-VALIDATOR := .github/scripts/validator/index.js
-
-# Default target
 .DEFAULT_GOAL := help
 
 ## help: Show this help message
@@ -14,12 +9,10 @@ help:
 	@echo "help - Show available make commands"
 	@grep -E '^##' $(MAKEFILE_LIST) | grep -v '^## help' | sed -e 's/^## //' -e 's/:/ -/' | sort
 
-
 ## check-prereqs: Verify required tools are installed
 check-prereqs:
 	@command -v make >/dev/null 2>&1 || { echo >&2 "❌ make is not installed. Please install it first."; exit 1; }
-	@command -v node >/dev/null 2>&1 || { echo >&2 "❌ node is not installed. Please install Node.js."; exit 1; }
-	@command -v npm >/dev/null 2>&1 || { echo >&2 "❌ npm is not installed. Please install npm."; exit 1; }
+	@command -v go >/dev/null 2>&1 || { echo >&2 "❌ go is not installed. Please install Go."; exit 1; }
 	@echo "✅ All prerequisites are installed."
 
 ## check-ext: Check for .yml files and enforce .yaml usage
@@ -34,13 +27,13 @@ check-ext:
 		echo "✅ No .yml files found."; \
 	fi
 
-## install: Install npm dependencies for the validator
-install:
-	cd .github/scripts/validator && npm install
+## build: Build the Go validator binary
+build:
+	cd .github/scripts/validator && go build -o validator validator.go
 
-## validate: Run the banner YAML validation script
+## validate: Run the Go validator binary
 validate:
-	node $(VALIDATOR) $(YAML_DIR) $(SCHEMA)
+	.github/scripts/validator/validator $(SCHEMA) $(YAML_DIR)
 
-## all: Run check-prereqs, check-ext, install, and validate
-all: check-prereqs check-ext install validate
+## all: Run check-prereqs, check-ext, build, and validate
+all: check-prereqs check-ext build validate
