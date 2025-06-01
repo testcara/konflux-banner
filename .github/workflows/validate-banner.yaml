@@ -4,9 +4,11 @@ on:
   push:
     paths:
     - 'clusters/**/*.yaml'
+    - 'deploy/**/**/*.yaml'
   pull_request:
     paths:
     - 'clusters/**/*.yaml'
+    - 'deploy/**/**/*.yaml'
 
 permissions: read-all
 
@@ -17,5 +19,22 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+
     - name: Run banner validation via Makefile
-      run: make all
+      run: make check-ext check-symlinks build validate
+
+  kustomize-validate:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup Kustomize
+      uses: imranismail/setup-kustomize@v1
+
+    - name: Run pre-deploy via Makefile
+      run: make kustomize-validate
