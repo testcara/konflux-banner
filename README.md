@@ -1,10 +1,13 @@
 # 🔔 Konflux Banner Repository
 
-This repository manages **banner notifications** for the [Konflux](https://konflux.pages.redhat.com/docs/users/index.html).  
+
+This repository manages **banner notifications** for the [Konflux](https://konflux.pages.redhat.com/docs/users/index.html).
 Use it to **add**, **edit**, or **remove** banners related to **upcoming shutdowns**, **service degradation**, etc.
 
-Konflux frontend reads the content of banners directly from this repository and displays them in the UI.  
-Each cluster reads only its own banner file.
+When a banner file is updated, ArgoCD automatically and in real time triggers a sync to update the corresponding ConfigMap in the target cluster.
+The Konflux frontend reads banner content from this ConfigMap and displays it in the UI.
+
+Each cluster only processes its own banner file.
 
 ---
 
@@ -83,31 +86,43 @@ clusters
 
 ## ✅ How It Works
 
-1. **Cluster-Specific Banner Configuration Paths**
+1. **Cluster-Specific Banner Files (User-Facing)**
 
-   For each cluster, a ConfigMap named 'konflux-banner-config' is generated via Kustomize.
-   This ConfigMap only contains a single bannerPath key, which points to the actual banner content file (e.g., `https://raw.githubusercontent.com/testcara/konflux-banner/main/clusters/production/stone-prod-p01.yaml`).
-   The path is defined in configMapGenerator using a per-cluster environment file, and each cluster has its own configuration.
+    Each cluster has its own banner file located in the ```clusters/``` directory
+    (e.g., clusters/production/stone-prod-p01.yaml).
+    These files are symbolic links pointing to the actual content files maintained under the ```deploy/``` directory, so that users can edit banner content easily without interacting with infrastructure configuration.
 
-2. **Displaying Banners**
+2. **Kustomize-Based Resource Configuration**
 
-   The frontend polls the generated ConfigMap, read the content from the bannerPath then displays the relevant banner to users based on the configured `startTime` and `endTime` times.
-   If the `startTime` and `endTime` times are not set, the banner would be shown immediately and never disapper.
+    The ```deploy/``` directory is the source of truth and contains the actual banner YAML files as well as Kustomize configurations used to generate Kubernetes ConfigMaps.
+    Each cluster has its own Kustomize overlay or configuration under deploy/, and ArgoCD apps are set up per cluster to monitor the corresponding Kustomize output.
+    When banner content changes (even through symbolic links), ArgoCD detects the updates and triggers a sync, generating a new ConfigMap for the cluster.
 
-3. **No Infra Deployment Required**
+3. **Displaying Banners in the UI**
 
-   Once bannerPath is set via a one-time infra PR, banner updates **require no deployment**.
-   Simply modify the banner YAML here and merge the PR — the frontend will pick it up automatically.
+    The Konflux frontend continuously polls the ConfigMap deployed in the cluster.
+    It reads and displays the banner content based on the configured startTime and endTime.
+    If these fields are omitted, the banner is shown immediately and remains visible until updated or removed.
+
+4. **Seamless Workflow for Users**
+
+    Users only need to modify the banner YAMLs in the clusters/ directory.  
+    Behind the scenes, the changes are propagated via symbolic links to the deploy/ directory, where they are picked up by ArgoCD.
+    No infra knowledge or deployment steps are required from the user — banner updates are reflected in the UI automatically and in real time after a simple PR merge.
 
 ## 🔎 YAML Validation
 
-All banner YAML files under `clusters/` are validated to ensure correctness and safety.
+All banner YAML files under the clusters/ directory are validated to ensure correctness, consistency, and safety before being accepted.
 
 Validation includes:
 
-- File extension check — Only `.yaml` is allowed (no `.yml`)
-- Schema validation — Validates required fields and types against a JSON schema
-- Content safety — Ensures `summary` and `details` do not include unsafe content
+- File type check — Only .yaml files are allowed (no .yml or other formats)
+- Schema validation — Ensures each banner file contains all required fields and correct types, based on a predefined JSON schema
+- Content safety — Verifies that summary and details fields do not contain unsafe or unsupported content
+- Symlink enforcement — Each file under clusters/ must be a symbolic link pointing to a corresponding file under deploy/; direct (non-symlink) YAML files are not allowed
+- Kustomize build validation — Ensures all Kustomize configurations under deploy/ can be successfully built using kustomize build, producing valid Kubernetes manifests
+
+These validations help maintain consistency across clusters, prevent misconfiguration, and ensure that ArgoCD can successfully pick up and sync banner updates.
 
 ### CI Validation (GitHub Actions)
 
@@ -118,13 +133,15 @@ To help demonstrate the logic, here are example pull requests that illustrate bo
 
 ✅ Valid Examples:
 
-- ✅ [PR #4](https://github.com/testcara/konflux-banner/pull/4) – Valid Example 1: vaild banner content with all filed
-- ✅ [PR #5](https://github.com/testcara/konflux-banner/pull/5) – Valid Example 2: vaild banner content without time or details.
+- ✅ [PR #4](https://github.com/testcara/konflux-banner/pull/4) – Valid Example 1: vaild banner content with all schema fileds
+- ✅ [PR #5](https://github.com/testcara/konflux-banner/pull/5) – Valid Example 2: vaild banner content without time or details shema fields.
+- ✅ [PR #7](https://github.com/testcara/konflux-banner/pull/7) - Vaild Example 3: new valid banner content for new clusters
 
 ❌ Invalid Examples:
 
 - ❌ [PR #2](https://github.com/testcara/konflux-banner/pull/2) – Invalid Example 1: invalid banner content with invalid schema
 - ❌ [PR #3](https://github.com/testcara/konflux-banner/pull/3) – Invalid Example 2: invalid banner content with improper HTML code.
+- ❌ [PR #8](https://github.com/testcara/konflux-banner/pull/8) – Invalid Example 3: invalid new banner content without updating the deploy real content.
 
 ### Local Validation (Recommended Before Push)
 
@@ -132,27 +149,40 @@ To help demonstrate the logic, here are example pull requests that illustrate bo
 
 To run the YAML schema validator locally, ensure you have the following tool installed:
 
-- `Go` – the Go programming language (version 1.20 or higher recommended)
+- `make`– for running the validation targets
+- `go` – the Go programming language (version 1.20+ recommended)
+- `kustomize` – for building Kubernetes overlays
 
 Example install commands:
 
 ```bash
 # macOS (via Homebrew)
-brew install go
+brew install go kustomize
 
 # Ubuntu/Debian
 sudo apt-get update
-sudo apt-get install golang
+sudo apt-get install golang kustomize
 
-# Fedora/Centos/RHEL
-sudo dnf install golang
+# Fedora/CentOS/RHEL
+sudo dnf install golang kustomize
 ```
 
-#### Run Validations Locally
+#### ✅ What’s Checked
 
-Run ```make check-prereq``` to verify your environment has all required tools mentioned before and then validate.
+Running make all will perform the following validations:
+
+- File Extension Check – Ensures no .yml files are used (only .yaml is allowed)
+- Symlink Check – Validates that all .yaml files in clusters/ are symbolic links pointing to    corresponding files in deploy/
+- Kustomize Validation – Confirms that every Kustomize overlay in deploy/ can be successfully built
+- Schema + Content Validation – Compiles and runs the Go-based schema validator to ensure banner content is safe and structurally correct
+
+#### ▶ Run Validations Locally
 
 ```bash
+# Check if your environment is ready
+make check-prereqs
+
+# Run all validation steps
 make all
 ```
 
@@ -169,8 +199,12 @@ make all
     ```
 
 3. **Create/Update a YAML file**  
-    Edit one exsiting YAML file under the appropriate directory (e.g., `clusters/staging` or `clusters/production`).
-    As for adding new banner to new clusters, beside creating one YAML file here, one Pull Request for [konflux-banner](https://github.com/testcara/infra-deployments/tree/konflux-banner/components/konflux-banner) component in infra-deployment repo is also needed.
+   - Locate the appropriate directory under clusters/staging/ or clusters/production/.
+   - Update an existing banner by editing the .yaml file.
+   - Add a new banner by creating a new .yaml file via symlink to the target location in deploy/.
+    ⚠️ All banner files under clusters/ must be symbolic links pointing to files under deploy/. Direct .yaml files are not allowed.
+
+    If you're adding a banner for a new cluster, you will also need to submit a Pull Request to the `infra-deployments` repo to register the new cluster's Kustomize overlay.
 
 4. **(Optional) Validate Locally**  
 
